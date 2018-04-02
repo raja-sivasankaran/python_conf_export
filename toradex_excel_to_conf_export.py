@@ -10,7 +10,7 @@ print('Number of arguments:', len(sys.argv))
 print('The arguments are:', str(sys.argv))
 
 #excel_sheet_filename = str(sys.argv[1])
-excel_sheet_filename = str('Apalis_iMX6.xlsx')
+excel_sheet_filename = str('Apalis_TK1_1.xlsx')
 #excel_sheet_filename = str('Colibri_iMX7_512MB.xlsx')
 
 wb = openpyxl.load_workbook(excel_sheet_filename)
@@ -41,11 +41,26 @@ resultFile.write('###' + tmp_str[0] + ' ' + tmp_str[1].upper() + ' SODIMM number
 #elif tmp_str[1].lower() == 'vf50':
 #    column_port_heading = str('VF50 Note2')
 
-column_pin_heading = input('Enter sodimm pin column name where only pin number is specified:')
-column_port_heading = input('Enter gpio port information column heading name:')
+column_pin_heading = str('pin') #input('Enter sodimm pin column name where only pin number is specified:')
+column_port_heading = str('T20 Function') #input('Enter gpio port information column heading name:')
+
+
+processor_type_str = str(tmp_str[1])
+
+#processor_type = processor_type_str.find('T')
+
+processor_family= str('NXP')
+
+if processor_type_str.find('TK1') >= 0:
+    processor_family = str('TK1')
+else if processor_type_str.find('T') >= 0:
+    processor_family = str('NVIDIA')
+
+
 
 column_port = int(1)
 column_pin = int(1)
+sodimmm_number = int(1)
 
 for tmp in range(1, ws1.max_column):
     column_str = ws1.cell(1, tmp).value
@@ -65,24 +80,68 @@ print('Reading rows...')
 for row in range(2, ws1.max_row + 1):
         # Each row in the spreadsheet has data for one census tract.
 
-    sodimm_number= ws1.cell(row, column_pin).value
+    bank_number = int(1)
+
+    if sodimmm_number == ws1.cell(row, column_pin).value:
+        continue;
+
+    sodimm_number = ws1.cell(row, column_pin).value
     gpio_str = ws1.cell(row, column_port).value
 
-    #This is less time consuming option, dut don't know how to use it
+    #This is less time consuming option, but don't know how to use it
     #s = [int(s) for s in gpioStr.split() if s.isdigit()]
 
 #   print(gpio_str)
-    gpio_str_split = re.findall('\d+', gpio_str)
+
 #   print(gpio_str_split)
 
-    bank_number = int(gpio_str_split[0])
-    offset_number = int(gpio_str_split[1])
-    gpio_number = bank_number * 32 + offset_number
+    if processor_family == 'NXP':
+        gpio_str_split = re.findall('\d+', gpio_str)
+        bank_number = int(gpio_str_split[0])
+        offset_number = int(gpio_str_split[1])
+        gpio_number = bank_number * 32 + offset_number
+
+#        m = re.match("(?:(?:\w{3})|(?:\-{3}))\d\d\d$", v)
+
+    if processor_family == "NVIDIA":
+        gpio_str_split = re.findall(r'-[\w]+', gpio_str)
+        gpio_str_split = re.findall(r'[A-Za-z]+', gpio_str_split[0])
+        #gpio_str_split = re.findall(r'[.]+', gpio_str_split[0])
+        gpio_str_lst = list(gpio_str_split[0])
+
+        gpio_number_str = re.findall('\d+', gpio_str)
+        #if gpio_str_lst.__len__() == int(1):
+        bank_number = ord(gpio_str_lst[0].upper()) - ord('A')
+
+        if gpio_str_lst.__len__() == int(2):
+            bank_number = bank_number + 26
+
+
+        offset_number = int(gpio_number_str[0])
+        gpio_number = bank_number * 8 + offset_number
+
+    else if processor_family == "TK1":
+        gpio_str_split = re.findall(r'GPIO3_P[\w]+', gpio_str)
+        gpio_str_split = re.findall(r'[A-Za-z]+', gpio_str_split[0])
+        # gpio_str_split = re.findall(r'[.]+', gpio_str_split[0])
+        gpio_str_lst = list(gpio_str_split[0])
+
+        gpio_number_str = re.findall('\d+', gpio_str)
+        # if gpio_str_lst.__len__() == int(1):
+        bank_number = ord(gpio_str_lst[0].upper()) - ord('A')
+
+        if gpio_str_lst.__len__() == int(2):
+            bank_number = bank_number + 26
+
+        offset_number = int(gpio_number_str[0])
+        gpio_number = bank_number * 8 + offset_number
 
 #   print(bank_number, offset_number, gpio_number)
 
     gpio_number_str = str(gpio_number)
-    sodimm_number_str = pin_name + str(sodimm_number)
+    sodimm_number_check = str(sodimm_number)
+    sodimm_number_final = re.findall(r'\d+', sodimm_number_check)[0]
+    sodimm_number_str = pin_name + sodimm_number_final
 
     resultFile.write(sodimm_number_str + ' = ' + gpio_number_str + '\n')
 #   print(sodimm_number_str + '=' + gpio_number_str)
