@@ -21,7 +21,7 @@ tmp_str = re.split('[_.]', excel_sheet_filename)
 result_file_name = tmp_str[0] + '_' + tmp_str[1] + '_' + tmp_str[2] + str('.conf')
 
 # Open a new text file and write the contents of countyData to it.
-print('Writing results...')
+print('Writing results...' + result_file_name)
 resultFile = open(result_file_name, 'w')
 
 resultFile.write('# Toradex ' + tmp_str[0] + ' ' + tmp_str[1] + ' Computer On Module.' + '\r\n')
@@ -41,8 +41,8 @@ resultFile.write('###' + tmp_str[0] + ' ' + tmp_str[1].upper() + ' SODIMM number
 #elif tmp_str[1].lower() == 'vf50':
 #    column_port_heading = str('VF50 Note2')
 
-column_pin_heading = str('pin') #input('Enter sodimm pin column name where only pin number is specified:')
-column_port_heading = str('T20 Function') #input('Enter gpio port information column heading name:')
+column_pin_heading = input('Enter sodimm pin column name where only pin number is specified:')
+column_port_heading = input('Enter gpio port information column heading name:')
 
 
 processor_type_str = str(tmp_str[1])
@@ -53,14 +53,12 @@ processor_family= str('NXP')
 
 if processor_type_str.find('TK1') >= 0:
     processor_family = str('TK1')
-else if processor_type_str.find('T') >= 0:
+elif processor_type_str.find('T') >= 0:
     processor_family = str('NVIDIA')
-
-
 
 column_port = int(1)
 column_pin = int(1)
-sodimmm_number = int(1)
+sodimm_number = int(0)
 
 for tmp in range(1, ws1.max_column):
     column_str = ws1.cell(1, tmp).value
@@ -82,7 +80,7 @@ for row in range(2, ws1.max_row + 1):
 
     bank_number = int(1)
 
-    if sodimmm_number == ws1.cell(row, column_pin).value:
+    if sodimm_number == ws1.cell(row, column_pin).value:
         continue;
 
     sodimm_number = ws1.cell(row, column_pin).value
@@ -120,20 +118,29 @@ for row in range(2, ws1.max_row + 1):
         offset_number = int(gpio_number_str[0])
         gpio_number = bank_number * 8 + offset_number
 
-    else if processor_family == "TK1":
-        gpio_str_split = re.findall(r'GPIO3_P[\w]+', gpio_str)
+    elif processor_family == "TK1":
+        gpio_str_split = list()
+        gpio_str_split = re.findall(r'_[\w]+', gpio_str)
+
+        if not gpio_str_split:
+            continue
+
         gpio_str_split = re.findall(r'[A-Za-z]+', gpio_str_split[0])
         # gpio_str_split = re.findall(r'[.]+', gpio_str_split[0])
         gpio_str_lst = list(gpio_str_split[0])
 
         gpio_number_str = re.findall('\d+', gpio_str)
         # if gpio_str_lst.__len__() == int(1):
-        bank_number = ord(gpio_str_lst[0].upper()) - ord('A')
 
-        if gpio_str_lst.__len__() == int(2):
+        if gpio_str_lst.__len__() == int(1) or gpio_str_lst.__len__() == int(0):
+            continue;
+
+        bank_number = ord(gpio_str_lst[1].upper()) - ord('A')
+
+        if gpio_str_lst.__len__() == int(3):
             bank_number = bank_number + 26
 
-        offset_number = int(gpio_number_str[0])
+        offset_number = int(gpio_number_str[1])
         gpio_number = bank_number * 8 + offset_number
 
 #   print(bank_number, offset_number, gpio_number)
