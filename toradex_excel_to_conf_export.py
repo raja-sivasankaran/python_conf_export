@@ -9,30 +9,34 @@ print('This is the name of the script:', sys.argv[0])
 print('Number of arguments:', len(sys.argv))
 print('The arguments are:', str(sys.argv))
 
-#excel_sheet_filename = str(sys.argv[1])
-excel_sheet_filename = str('Apalis_TK1_1.xlsx')
+if len(sys.argv) != 3:
+    print('Please input excel sheet and outfile filename')
+    sys.exit()
+
+excel_sheet_filename = str(sys.argv[1])
+#excel_sheet_filename = str('Apalis_TK1_1.xlsx')
 #excel_sheet_filename = str('Colibri_iMX7_512MB.xlsx')
 
 wb = openpyxl.load_workbook(excel_sheet_filename)
 ws1 = wb.active
-
+    
 print(excel_sheet_filename)
 tmp_str = re.split('[_.]', excel_sheet_filename)
-result_file_name = tmp_str[0] + '_' + tmp_str[1] + '_' + tmp_str[2] + str('.conf')
+result_file_name = str(sys.argv[2]) #tmp_str[0] + '_' + tmp_str[1] + '_' + tmp_str[2] + str('.conf')
 
 # Open a new text file and write the contents of countyData to it.
 print('Writing results...' + result_file_name)
 resultFile = open(result_file_name, 'w')
 
-resultFile.write('# Toradex ' + tmp_str[0] + ' ' + tmp_str[1] + ' Computer On Module.' + '\r\n')
-resultFile.write('# http://developer.toradex.com/products/' + tmp_str[0].lower() + '-' + tmp_str[1].lower() + '\r\n\n')
+resultFile.write('# Toradex ' + tmp_str[0] + ' ' + tmp_str[1] + ' Computer On Module.' + '\n')
+resultFile.write('# http://developer.toradex.com/products/' + tmp_str[0].lower() + '-' + tmp_str[1].lower() + '\n\n')
 
-resultFile.write('[board]' + '\r\n')
-resultFile.write('dtfile = /proc/device-tree/model' + '\r\n')
-resultFile.write('model = Toradex ' + tmp_str[0] + ' ' + tmp_str[1] + ' on ' + tmp_str[0] + ' Evaluation Board' + '\r\n\n')
+resultFile.write('[board]' + '\n')
+resultFile.write('dtfile = /proc/device-tree/model' + '\n')
+resultFile.write('model = Toradex ' + tmp_str[0] + ' ' + tmp_str[1] + ' on ' + tmp_str[0] + ' Evaluation Board' + '\n\n')
 
-resultFile.write('[GPIO]' + '\r\n')
-resultFile.write('###' + tmp_str[0] + ' ' + tmp_str[1].upper() + ' SODIMM number to GPIO number mapping' + '\r\n\n')
+resultFile.write('[GPIO]' + '\n')
+resultFile.write('###' + tmp_str[0] + ' ' + tmp_str[1].upper() + ' SODIMM number to GPIO number mapping' + '\n\n')
 
 #column_port_heading = str()
 
@@ -55,6 +59,10 @@ if processor_type_str.find('TK1') >= 0:
     processor_family = str('TK1')
 elif processor_type_str.find('T') >= 0:
     processor_family = str('NVIDIA')
+elif processor_type_str.find('iMX7') >= 0:
+    processor_family = str('iMX7')
+elif processor_type_str.find('iMX6') >= 0:
+    processor_family = str('iMX6')
 
 column_port = int(1)
 column_pin = int(1)
@@ -98,7 +106,11 @@ for row in range(2, ws1.max_row + 1):
         bank_number = int(gpio_str_split[0])
         offset_number = int(gpio_str_split[1])
         gpio_number = bank_number * 32 + offset_number
-
+    elif processor_family == 'iMX7' or processor_family == 'iMX6':
+        gpio_str_split = re.findall('\d+', gpio_str)
+        bank_number = int(gpio_str_split[0])
+        offset_number = int(gpio_str_split[1])
+        gpio_number = (bank_number -1) * 32 + offset_number
 #        m = re.match("(?:(?:\w{3})|(?:\-{3}))\d\d\d$", v)
 
     if processor_family == "NVIDIA":
@@ -113,7 +125,6 @@ for row in range(2, ws1.max_row + 1):
 
         if gpio_str_lst.__len__() == int(2):
             bank_number = bank_number + 26
-
 
         offset_number = int(gpio_number_str[0])
         gpio_number = bank_number * 8 + offset_number
