@@ -24,7 +24,7 @@ print(excel_sheet_filename)
 tmp_str = re.split('[_.]', excel_sheet_filename)
 result_file_name = str(sys.argv[2]) #tmp_str[0] + '_' + tmp_str[1] + '_' + tmp_str[2] + str('.conf')
 
-# Open a new text file and write the contents of countyData to it.
+# Open a new text file for writing results.
 print('Writing results...' + result_file_name)
 resultFile = open(result_file_name, 'w')
 
@@ -45,7 +45,7 @@ resultFile.write('###' + tmp_str[0] + ' ' + tmp_str[1].upper() + ' SODIMM number
 #elif tmp_str[1].lower() == 'vf50':
 #    column_port_heading = str('VF50 Note2')
 
-column_pin_heading = input('Enter sodimm pin column name where only pin number is specified:')
+column_pin_heading = input('Enter sodimm pin column heading name where only the pin number is filled:')
 column_port_heading = input('Enter gpio port information column heading name:')
 
 
